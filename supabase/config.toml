@@ -1,0 +1,11 @@
+project_id = "tkoi_shop"
+
+[auth.email]
+otp_length = 6
+otp_expiry = 3600
+
+[functions.xendit-webhook]
+verify_jwt = false
+
+[functions.xendit-payment-return]
+verify_jwt = false
