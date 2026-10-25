@@ -59,4 +59,53 @@ void main() {
     expect(message, contains('newest six-digit code'));
     expect(message, isNot(contains('AuthApiException')));
   });
+
+  test('invalid login credentials do not expose a raw auth exception', () {
+    final message = friendlyError(
+      'AuthApiException(message: Invalid login credentials, '
+      'statusCode: 400, code: invalid_credentials)',
+    );
+
+    expect(
+      message,
+      'Incorrect email or password. Check your details or create a new account.',
+    );
+    expect(message, isNot(contains('AuthApiException')));
+  });
+
+  test('missing phone verification helper has a friendly recovery message', () {
+    final message = friendlyError(
+      'PostgrestException(message: function public.is_phone_verified(uuid) '
+      'does not exist, code: 42883)',
+    );
+    expect(message, contains('Rerun the updated migration 06'));
+    expect(message, isNot(contains('PostgrestException')));
+  });
+
+  test('missing demo payout RPC points to migration 08', () {
+    final message = friendlyError(
+      'PostgrestException(message: Could not find the function '
+      'public.save_demo_seller_payout_account, code: PGRST202)',
+    );
+    expect(message, contains('08_demo_payout_accounts.sql'));
+    expect(message, isNot(contains('PostgrestException')));
+  });
+
+  test('missing demo withdrawal RPC points to migration 10', () {
+    final message = friendlyError(
+      'PostgrestException(message: Could not find the function '
+      'public.request_demo_seller_withdrawal, code: PGRST202)',
+    );
+    expect(message, contains('10_demo_withdrawal.sql'));
+    expect(message, isNot(contains('PostgrestException')));
+  });
+
+  test('database validation errors do not expose PostgREST internals', () {
+    final message = friendlyError(
+      'PostgrestException(message: Verify your phone before adding a payout '
+      'account., code: P0001, details: Bad Request)',
+    );
+    expect(message, 'Verify your phone before adding a payout account.');
+    expect(message, isNot(contains('P0001')));
+  });
 }

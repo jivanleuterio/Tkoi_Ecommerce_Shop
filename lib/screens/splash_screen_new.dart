@@ -49,17 +49,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const TkoiBrandMark(size: 104, light: true),
-                    const SizedBox(height: 22),
-                    const Text(
-                      'Tkoi',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 44,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1.5,
-                      ),
-                    ),
+                    const TkoiWordmark(height: 108, light: true),
                     const SizedBox(height: 5),
                     Text(
                       'FISH MARKETPLACE',

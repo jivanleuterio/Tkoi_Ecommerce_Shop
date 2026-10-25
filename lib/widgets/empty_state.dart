@@ -18,40 +18,64 @@ class EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 92,
-              height: 92,
-              decoration: const BoxDecoration(
-                gradient: AppColors.waterGradient,
-                shape: BoxShape.circle,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact =
+            constraints.hasBoundedHeight && constraints.maxHeight < 300;
+        final iconSize = compact ? 68.0 : 92.0;
+        final content = Padding(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 16 : 32,
+            vertical: compact ? 12 : 32,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: iconSize,
+                height: iconSize,
+                decoration: const BoxDecoration(
+                  gradient: AppColors.waterGradient,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: compact ? 34 : 44, color: Colors.white),
               ),
-              child: Icon(icon, size: 44, color: Colors.white),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleLarge,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 340),
-              child: Text(
-                message,
+              SizedBox(height: compact ? 12 : 20),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleLarge,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppColors.softGray),
               ),
-            ),
-            if (action != null) ...[const SizedBox(height: 20), action!],
-          ],
-        ),
-      ),
+              SizedBox(height: compact ? 4 : 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 340),
+                child: Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.softGray),
+                ),
+              ),
+              if (action != null) ...[
+                SizedBox(height: compact ? 12 : 20),
+                action!,
+              ],
+            ],
+          ),
+        );
+
+        // Full-page and fixed-height parents can become shorter on small
+        // phones or with large accessibility text. Allow only the empty state
+        // to scroll instead of showing a RenderFlex overflow stripe.
+        return Center(
+          child: constraints.hasBoundedHeight
+              ? SingleChildScrollView(
+                  primary: false,
+                  physics: const ClampingScrollPhysics(),
+                  child: content,
+                )
+              : content,
+        );
+      },
     );
   }
 }

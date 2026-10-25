@@ -34,6 +34,12 @@ abstract final class AppColors {
     end: Alignment.bottomCenter,
   );
 
+  static const logoSurfaceGradient = LinearGradient(
+    colors: [Colors.white, Color(0xFFEAF9F7)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   static const softShadow = [
     BoxShadow(color: Color(0x16172033), blurRadius: 24, offset: Offset(0, 10)),
   ];

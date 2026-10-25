@@ -56,28 +56,73 @@ class _Spot extends StatelessWidget {
 
 class TkoiBrandMark extends StatelessWidget {
   final double size;
-  final bool light;
 
-  const TkoiBrandMark({super.key, this.size = 64, this.light = false});
+  const TkoiBrandMark({super.key, this.size = 64});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        gradient: AppColors.koiGradient,
-        shape: BoxShape.circle,
-        boxShadow: AppColors.softShadow,
-        border: Border.all(
-          color: light ? Colors.white.withValues(alpha: .5) : Colors.white,
-          width: 3,
-        ),
+      child: Image.asset(
+        'assets/images/tkoi_logo.png',
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+        semanticLabel: 'Tkoi koi logo',
       ),
-      child: Icon(
-        Icons.set_meal_rounded,
-        color: Colors.white,
-        size: size * .55,
+    );
+  }
+}
+
+class TkoiWordmark extends StatelessWidget {
+  final double height;
+  final bool light;
+
+  const TkoiWordmark({super.key, this.height = 46, this.light = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final darkColor = light ? Colors.white : AppColors.sumi;
+    final accentColor = light ? AppColors.gold : AppColors.koiOrange;
+    final waterColor = light ? AppColors.aqua : AppColors.pondBlue;
+
+    return Semantics(
+      label: 'Tkoi',
+      image: true,
+      child: ExcludeSemantics(
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            TkoiBrandMark(size: height),
+            SizedBox(width: height * .02),
+            Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'k',
+                    style: TextStyle(color: darkColor),
+                  ),
+                  TextSpan(
+                    text: 'o',
+                    style: TextStyle(color: accentColor),
+                  ),
+                  TextSpan(
+                    text: 'i',
+                    style: TextStyle(color: waterColor),
+                  ),
+                ],
+              ),
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: height * .72,
+                height: 1,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -height * .055,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

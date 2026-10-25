@@ -75,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 constraints: const BoxConstraints(maxWidth: 440),
                 child: Column(
                   children: [
-                    const TkoiBrandMark(size: 82),
+                    const TkoiWordmark(height: 78),
                     const SizedBox(height: 14),
                     Text(
                       'Welcome to Tkoi',

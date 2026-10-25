@@ -112,7 +112,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               constraints: const BoxConstraints(maxWidth: 520),
               child: Column(
                 children: [
-                  const TkoiBrandMark(size: 64),
+                  const TkoiWordmark(height: 64),
                   const SizedBox(height: 12),
                   Text(
                     'Join the Tkoi community',

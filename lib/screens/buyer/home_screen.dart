@@ -68,13 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
-          children: [
-            TkoiBrandMark(size: 38),
-            SizedBox(width: 10),
-            Text('Tkoi'),
-          ],
-        ),
+        title: const TkoiWordmark(height: 42),
         actions: [
           IconButton(
             tooltip: 'Search fish',

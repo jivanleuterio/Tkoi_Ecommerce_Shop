@@ -175,6 +175,26 @@ class ProductService {
     await _client.from('products').update({'status': status}).eq('id', id);
   }
 
+  Future<Product> duplicateProduct(Product product) => saveProduct(
+    shopId: product.shopId,
+    values: {
+      'name': '${product.name} copy',
+      'species': product.species,
+      'category': product.category,
+      'description': product.description,
+      'price': product.price,
+      'quantity': product.quantity,
+      'size': product.size,
+      'age_months': product.ageMonths,
+      'sex': product.sex,
+      'health_condition': product.healthCondition,
+      'seller_location': product.sellerLocation,
+      // Let the seller review the duplicate before publishing it.
+      'status': 'hidden',
+    },
+    newImageUrls: product.imageUrls,
+  );
+
   Future<void> deleteProduct(String id) async {
     await _client.from('products').delete().eq('id', id);
   }

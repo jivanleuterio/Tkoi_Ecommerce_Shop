@@ -92,9 +92,16 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     }
   }
 
+  void _removeSelectedImage(int index) {
+    setState(() => _images = [..._images]..removeAt(index));
+  }
+
   Future<void> _save() async {
     if (!_key.currentState!.validate()) return;
-    if (_images.isEmpty && (widget.product?.imageUrls.isEmpty ?? true)) {
+    // Existing listings may use Tkoi's bundled fish visual when they do not
+    // have an uploaded product_images row. Editing text or stock must not
+    // force the seller to upload a replacement image.
+    if (_images.isEmpty && widget.product == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select at least one fish image.')),
       );
@@ -360,15 +367,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           : '${_images.length} image(s) selected',
                     ),
                   ),
-                  if (_images.isNotEmpty ||
-                      (editing && widget.product!.imageUrls.isNotEmpty)) ...[
+                  if (_images.isNotEmpty || editing) ...[
                     const SizedBox(height: 12),
                     SizedBox(
                       height: 104,
                       child: ListView(
                         scrollDirection: Axis.horizontal,
                         children: [
-                          if (editing)
+                          if (editing && widget.product!.imageUrls.isNotEmpty)
                             for (final imageUrl in widget.product!.imageUrls)
                               Padding(
                                 padding: const EdgeInsets.only(right: 10),
@@ -383,30 +389,71 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                                   height: 104,
                                 ),
                               ),
-                          for (final image in _images)
+                          if (editing && widget.product!.imageUrls.isEmpty)
                             Padding(
                               padding: const EdgeInsets.only(right: 10),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(
                                   AppRadii.medium,
                                 ),
-                                child: Image.file(
-                                  File(image.path),
+                                child: Image.asset(
+                                  FishVisuals.forFish(
+                                    category: _category,
+                                    species: _species.text,
+                                    name: _name.text,
+                                  ),
                                   width: 104,
                                   height: 104,
                                   fit: BoxFit.cover,
                                 ),
                               ),
                             ),
+                          for (final entry in _images.indexed)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 10),
+                              child: Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadii.medium,
+                                    ),
+                                    child: Image.file(
+                                      File(entry.$2.path),
+                                      width: 104,
+                                      height: 104,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  Material(
+                                    color: Colors.black.withValues(alpha: .62),
+                                    shape: const CircleBorder(),
+                                    child: IconButton(
+                                      tooltip: 'Remove selected image',
+                                      onPressed: _saving
+                                          ? null
+                                          : () =>
+                                                _removeSelectedImage(entry.$1),
+                                      icon: const Icon(
+                                        Icons.close_rounded,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                         ],
                       ),
                     ),
                   ],
-                  if (editing && widget.product!.imageUrls.isNotEmpty)
+                  if (editing)
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        '${widget.product!.imageUrls.length} existing image(s) will be kept.',
+                        widget.product!.imageUrls.isEmpty
+                            ? 'The current Tkoi fish visual will be kept.'
+                            : '${widget.product!.imageUrls.length} existing image(s) will be kept.',
                       ),
                     ),
                   const SizedBox(height: 22),

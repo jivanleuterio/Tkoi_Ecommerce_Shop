@@ -21,13 +21,26 @@ class OrderService {
   }
 
   Future<List<MarketOrder>> getSellerOrders(String shopId) async {
-    final data = await _client
-        .from('orders')
-        .select(orderSelect)
-        .eq('shop_id', shopId)
-        .order('created_at', ascending: false);
-    final orders = data.map(MarketOrder.fromMap).toList();
-    return _attachAftercare(orders, shopId: shopId);
+    try {
+      final rows = await _client.rpc(
+        'get_seller_orders_secure',
+        params: {'p_shop_id': shopId},
+      );
+      final orders = (rows as List)
+          .whereType<Map<String, dynamic>>()
+          .map(MarketOrder.fromMap)
+          .toList();
+      return await _attachAftercare(orders, shopId: shopId);
+    } on PostgrestException catch (error) {
+      if (error.code != '42883' && error.code != 'PGRST202') rethrow;
+      final data = await _client
+          .from('orders')
+          .select(orderSelect)
+          .eq('shop_id', shopId)
+          .order('created_at', ascending: false);
+      final orders = data.map(MarketOrder.fromMap).toList();
+      return _attachAftercare(orders, shopId: shopId);
+    }
   }
 
   Future<List<MarketOrder>> _attachAftercare(

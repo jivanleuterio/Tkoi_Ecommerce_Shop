@@ -78,11 +78,7 @@ class _OrdersScreenState extends State<OrdersScreen>
     return order.status == 'completed' &&
         order.review == null &&
         (returnStatus == null ||
-            const [
-              'rejected',
-              'cancelled',
-              'resolved',
-            ].contains(returnStatus)) &&
+            const ['rejected', 'cancelled'].contains(returnStatus)) &&
         order.items.any(
           (item) =>
               item.id.isNotEmpty && item.productId != null && !item.reviewed,
@@ -339,11 +335,18 @@ class _OrdersScreenState extends State<OrdersScreen>
                 children: [
                   DropdownButtonFormField<String>(
                     initialValue: reason,
+                    isExpanded: true,
                     decoration: const InputDecoration(labelText: 'Reason'),
                     items: _returnReasons
                         .map(
-                          (item) =>
-                              DropdownMenuItem(value: item, child: Text(item)),
+                          (item) => DropdownMenuItem(
+                            value: item,
+                            child: Text(
+                              item,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                         )
                         .toList(),
                     onChanged: (value) {
@@ -603,6 +606,10 @@ class _OrderCard extends StatelessWidget {
           'cancelled',
           'resolved',
         ].contains(returnRequest.status);
+    final returnWasCompleted = const {
+      'received',
+      'resolved',
+    }.contains(returnRequest?.status);
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
@@ -789,7 +796,9 @@ class _OrderCard extends StatelessWidget {
                         icon: const Icon(Icons.star_rounded),
                         label: const Text('Review'),
                       ),
-                    if (order.status == 'completed' && closedReturn)
+                    if (order.isReturnWindowOpen &&
+                        closedReturn &&
+                        !returnWasCompleted)
                       OutlinedButton.icon(
                         onPressed: onReturn,
                         icon: const Icon(Icons.assignment_return_outlined),
@@ -797,6 +806,16 @@ class _OrderCard extends StatelessWidget {
                           returnRequest == null
                               ? 'Request return'
                               : 'Request again',
+                        ),
+                      ),
+                    if (order.status == 'completed' &&
+                        !order.isReturnWindowOpen &&
+                        returnRequest == null)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8),
+                        child: Text(
+                          'The 24-hour return window has closed.',
+                          style: TextStyle(color: AppColors.softGray),
                         ),
                       ),
                     if (returnRequest?.status == 'requested')

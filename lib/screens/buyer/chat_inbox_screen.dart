@@ -173,6 +173,9 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                   ],
                 ),
                 onTap: () async {
+                  await ChatService().markRead(item.conversationId);
+                  if (!context.mounted) return;
+                  setState(() => _load());
                   await Navigator.push<void>(
                     context,
                     MaterialPageRoute(
@@ -182,7 +185,7 @@ class _ChatInboxScreenState extends State<ChatInboxScreen> {
                       ),
                     ),
                   );
-                  if (mounted) _refresh();
+                  if (mounted) await _refresh();
                 },
               );
             },

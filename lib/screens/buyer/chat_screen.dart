@@ -30,6 +30,7 @@ class _ChatScreenState extends State<ChatScreen> {
   late Future<ChatContext> _contextFuture;
   late Stream<List<ChatMessage>> _messageStream;
   bool _sending = false;
+  bool _canPop = false;
 
   @override
   void initState() {
@@ -84,155 +85,172 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<ChatContext>(
-    future: _contextFuture,
-    builder: (context, contextSnapshot) {
-      if (contextSnapshot.hasError) {
+  Widget build(BuildContext context) => PopScope(
+    canPop: _canPop,
+    onPopInvokedWithResult: (didPop, result) async {
+      if (didPop || _canPop) return;
+      try {
+        await _service.markRead(widget.conversationId);
+      } catch (_) {
+        // A read-receipt failure should never trap the user in the chat.
+      }
+      if (!mounted) return;
+      setState(() => _canPop = true);
+      Navigator.pop(this.context, result);
+    },
+    child: FutureBuilder<ChatContext>(
+      future: _contextFuture,
+      builder: (context, contextSnapshot) {
+        if (contextSnapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Conversation')),
+            body: ErrorView(
+              error: contextSnapshot.error!,
+              onRetry: () => setState(() {
+                _contextFuture = _service.getContext(widget.conversationId);
+              }),
+            ),
+          );
+        }
+        final chatContext = contextSnapshot.data;
         return Scaffold(
-          appBar: AppBar(title: const Text('Conversation')),
-          body: ErrorView(
-            error: contextSnapshot.error!,
-            onRetry: () => setState(() {
-              _contextFuture = _service.getContext(widget.conversationId);
-            }),
+          appBar: AppBar(
+            title: chatContext == null
+                ? const Text('Conversation')
+                : Row(
+                    children: [
+                      SafeNetworkImage(
+                        url: chatContext.otherAvatar,
+                        width: 38,
+                        height: 38,
+                        borderRadius: BorderRadius.circular(19),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              chatContext.otherName,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            Text(
+                              chatContext.shopName,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppColors.softGray,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+          body: Column(
+            children: [
+              if (chatContext != null &&
+                  (chatContext.productId != null ||
+                      chatContext.orderId != null))
+                _ContextCard(chatContext: chatContext),
+              Expanded(
+                child: StreamBuilder<List<ChatMessage>>(
+                  stream: _messageStream,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return ErrorView(error: snapshot.error!);
+                    }
+                    final messages = snapshot.data ?? const [];
+                    unawaited(_service.markRead(widget.conversationId));
+                    if (messages.isEmpty) {
+                      return const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(28),
+                          child: Text(
+                            'Start the conversation about this fish or order.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: AppColors.softGray),
+                          ),
+                        ),
+                      );
+                    }
+                    return ListView.builder(
+                      controller: _scroll,
+                      reverse: true,
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 20),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[messages.length - 1 - index];
+                        return _MessageBubble(
+                          message: message,
+                          isMine: message.senderId == _service.currentUserId,
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+              SafeArea(
+                top: false,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    border: Border(top: BorderSide(color: AppColors.border)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _message,
+                          enabled: !_sending && chatContext != null,
+                          minLines: 1,
+                          maxLines: 4,
+                          maxLength: 2000,
+                          buildCounter: (
+                            _, {
+                            required currentLength,
+                            required isFocused,
+                            maxLength,
+                          }) => null,
+                          textInputAction: TextInputAction.newline,
+                          decoration: const InputDecoration(
+                            hintText: 'Write a message...',
+                            prefixIcon: Icon(Icons.chat_bubble_outline_rounded),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filled(
+                        tooltip: 'Send message',
+                        onPressed: _sending || chatContext == null
+                            ? null
+                            : () => _send(chatContext),
+                        icon: _sending
+                            ? const SizedBox.square(
+                                dimension: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Icon(Icons.send_rounded),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         );
-      }
-      final chatContext = contextSnapshot.data;
-      return Scaffold(
-        appBar: AppBar(
-          title: chatContext == null
-              ? const Text('Conversation')
-              : Row(
-                  children: [
-                    SafeNetworkImage(
-                      url: chatContext.otherAvatar,
-                      width: 38,
-                      height: 38,
-                      borderRadius: BorderRadius.circular(19),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            chatContext.otherName,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          Text(
-                            chatContext.shopName,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: AppColors.softGray,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-        body: Column(
-          children: [
-            if (chatContext != null &&
-                (chatContext.productId != null || chatContext.orderId != null))
-              _ContextCard(chatContext: chatContext),
-            Expanded(
-              child: StreamBuilder<List<ChatMessage>>(
-                stream: _messageStream,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting &&
-                      !snapshot.hasData) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (snapshot.hasError) {
-                    return ErrorView(error: snapshot.error!);
-                  }
-                  final messages = snapshot.data ?? const [];
-                  unawaited(_service.markRead(widget.conversationId));
-                  if (messages.isEmpty) {
-                    return const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(28),
-                        child: Text(
-                          'Start the conversation about this fish or order.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: AppColors.softGray),
-                        ),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    controller: _scroll,
-                    reverse: true,
-                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 20),
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final message = messages[messages.length - 1 - index];
-                      return _MessageBubble(
-                        message: message,
-                        isMine: message.senderId == _service.currentUserId,
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-            SafeArea(
-              top: false,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(top: BorderSide(color: AppColors.border)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _message,
-                        enabled: !_sending && chatContext != null,
-                        minLines: 1,
-                        maxLines: 4,
-                        maxLength: 2000,
-                        buildCounter: (
-                          _, {
-                          required currentLength,
-                          required isFocused,
-                          maxLength,
-                        }) => null,
-                        textInputAction: TextInputAction.newline,
-                        decoration: const InputDecoration(
-                          hintText: 'Write a message...',
-                          prefixIcon: Icon(Icons.chat_bubble_outline_rounded),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filled(
-                      tooltip: 'Send message',
-                      onPressed: _sending || chatContext == null
-                          ? null
-                          : () => _send(chatContext),
-                      icon: _sending
-                          ? const SizedBox.square(
-                              dimension: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.send_rounded),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    },
+      },
+    ),
   );
 }
 

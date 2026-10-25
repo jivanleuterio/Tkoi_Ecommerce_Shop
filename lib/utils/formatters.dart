@@ -11,8 +11,17 @@ String compactCount(num value) {
 }
 
 String friendlyError(Object error) {
-  final text = error.toString().replaceFirst('Exception: ', '');
-  final lower = text.toLowerCase();
+  final rawText = error.toString().replaceFirst('Exception: ', '');
+  final postgrestMessage = RegExp(
+    r'PostgrestException\(message:\s*(.*?),\s*(?:code|statusCode):',
+    caseSensitive: false,
+  ).firstMatch(rawText)?.group(1);
+  final text = postgrestMessage?.trim() ?? rawText;
+  final lower = rawText.toLowerCase();
+  if (lower.contains('invalid_credentials') ||
+      lower.contains('invalid login credentials')) {
+    return 'Incorrect email or password. Check your details or create a new account.';
+  }
   if (lower.contains('otp_expired') ||
       lower.contains('token has expired or is invalid')) {
     return 'This verification code is expired or no longer valid. '
@@ -58,6 +67,28 @@ String friendlyError(Object error) {
           lower.contains('order_reviews'))) {
     return 'Order reviews and returns are not installed in Supabase yet. '
         'Run supabase/order_aftercare.sql in the Supabase SQL Editor, then try again.';
+  }
+  if (lower.contains('save_demo_seller_payout_account') &&
+      (lower.contains('pgrst202') || lower.contains('does not exist'))) {
+    return 'Demo payout saving is not installed in Supabase yet. '
+        'Run migration 08_demo_payout_accounts.sql, then try again.';
+  }
+  if (lower.contains('request_demo_seller_withdrawal') &&
+      (lower.contains('pgrst202') || lower.contains('does not exist'))) {
+    return 'Demo withdrawals are not installed in Supabase yet. '
+        'Run migration 10_demo_withdrawal.sql, then try again.';
+  }
+  if ((lower.contains('pgrst202') || lower.contains('pgrst205')) &&
+      (lower.contains('seller_wallet') ||
+          lower.contains('withdrawal') ||
+          lower.contains('payout'))) {
+    return 'Seller earnings are not installed in Supabase yet. '
+        'Run migrations 05, 06, and 07 in order, then try again.';
+  }
+  if (lower.contains('is_phone_verified') &&
+      (lower.contains('42883') || lower.contains('does not exist'))) {
+    return 'Phone verification support is not installed in Supabase yet. '
+        'Rerun the updated migration 06, then try again.';
   }
   if (lower.contains('socket') || lower.contains('network')) {
     return 'No internet connection. Please try again.';

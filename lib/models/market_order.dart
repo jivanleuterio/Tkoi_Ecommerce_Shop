@@ -1,3 +1,5 @@
+import 'seller_wallet.dart';
+
 class OrderLine {
   final String id;
   final String? productId;
@@ -92,6 +94,8 @@ class MarketOrder {
   final String sellerId;
   final String shopId;
   final String shopName;
+  final String buyerName;
+  final String? buyerAvatarUrl;
   final String status;
   final double total;
   final String deliveryAddress;
@@ -99,7 +103,10 @@ class MarketOrder {
   final String paymentStatus;
   final String? paymentChannel;
   final String? paymentTransactionId;
+  final int platformFeeCentavos;
+  final int netEarningsCentavos;
   final DateTime createdAt;
+  final DateTime? completedAt;
   final List<OrderLine> items;
   final OrderReview? review;
   final OrderReturnRequest? returnRequest;
@@ -110,6 +117,8 @@ class MarketOrder {
     required this.sellerId,
     required this.shopId,
     required this.shopName,
+    this.buyerName = 'Buyer',
+    this.buyerAvatarUrl,
     required this.status,
     required this.total,
     required this.deliveryAddress,
@@ -117,7 +126,10 @@ class MarketOrder {
     required this.paymentStatus,
     this.paymentChannel,
     this.paymentTransactionId,
+    this.platformFeeCentavos = 0,
+    this.netEarningsCentavos = 0,
     required this.createdAt,
+    this.completedAt,
     required this.items,
     this.review,
     this.returnRequest,
@@ -127,12 +139,16 @@ class MarketOrder {
     OrderReview? review,
     OrderReturnRequest? returnRequest,
     List<OrderLine>? items,
+    String? buyerName,
+    String? buyerAvatarUrl,
   }) => MarketOrder(
     id: id,
     buyerId: buyerId,
     sellerId: sellerId,
     shopId: shopId,
     shopName: shopName,
+    buyerName: buyerName ?? this.buyerName,
+    buyerAvatarUrl: buyerAvatarUrl ?? this.buyerAvatarUrl,
     status: status,
     total: total,
     deliveryAddress: deliveryAddress,
@@ -140,7 +156,10 @@ class MarketOrder {
     paymentStatus: paymentStatus,
     paymentChannel: paymentChannel,
     paymentTransactionId: paymentTransactionId,
+    platformFeeCentavos: platformFeeCentavos,
+    netEarningsCentavos: netEarningsCentavos,
     createdAt: createdAt,
+    completedAt: completedAt,
     items: items ?? this.items,
     review: review ?? this.review,
     returnRequest: returnRequest ?? this.returnRequest,
@@ -153,7 +172,12 @@ class MarketOrder {
       buyerId: map['buyer_id'] as String,
       sellerId: map['seller_id'] as String,
       shopId: map['shop_id'] as String,
-      shopName: shop?['name'] as String? ?? 'Fish Shop',
+      shopName:
+          map['shop_name'] as String? ??
+          shop?['name'] as String? ??
+          'Fish Shop',
+      buyerName: map['buyer_name'] as String? ?? 'Buyer',
+      buyerAvatarUrl: map['buyer_avatar_url'] as String?,
       status: map['status'] as String? ?? 'pending',
       total: (map['total'] as num? ?? 0).toDouble(),
       deliveryAddress: map['delivery_address'] as String? ?? '',
@@ -161,9 +185,16 @@ class MarketOrder {
       paymentStatus: map['payment_status'] as String? ?? 'not_required',
       paymentChannel: map['payment_channel'] as String?,
       paymentTransactionId: map['payment_transaction_id'] as String?,
+      platformFeeCentavos: centavosFromDatabase(map['platform_fee']),
+      netEarningsCentavos: centavosFromDatabase(map['net_earnings']),
       createdAt:
           DateTime.tryParse(map['created_at'] as String? ?? '') ??
           DateTime.now(),
+      completedAt:
+          DateTime.tryParse(map['completed_at'] as String? ?? '') ??
+          (map['status'] == 'completed'
+              ? DateTime.tryParse(map['updated_at'] as String? ?? '')
+              : null),
       items: (map['order_items'] as List? ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(OrderLine.fromMap)
@@ -182,4 +213,13 @@ class MarketOrder {
     'ONLINE' => 'Online payment',
     _ => paymentMethod,
   };
+
+  DateTime? get returnDeadline => completedAt?.add(const Duration(days: 1));
+
+  bool get isReturnWindowOpen {
+    final deadline = returnDeadline;
+    return status == 'completed' &&
+        deadline != null &&
+        DateTime.now().isBefore(deadline);
+  }
 }
