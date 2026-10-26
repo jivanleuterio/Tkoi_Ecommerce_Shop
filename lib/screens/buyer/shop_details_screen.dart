@@ -9,6 +9,7 @@ import '../../widgets/empty_state.dart';
 import '../../widgets/error_view.dart';
 import '../../widgets/loading_skeleton.dart';
 import '../../widgets/product_card.dart';
+import '../../widgets/report_button.dart';
 import '../../widgets/safe_network_image.dart';
 import 'product_details_screen.dart';
 
@@ -20,7 +21,13 @@ class ShopDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Shop details')),
+      appBar: AppBar(
+        title: const Text('Shop details'),
+        actions: [
+          ReportButton(targetType: 'shop', targetId: shopId, compact: true),
+          const SizedBox(width: 6),
+        ],
+      ),
       body: FutureBuilder<Shop>(
         future: ShopService().getShop(shopId),
         builder: (context, shopSnapshot) {

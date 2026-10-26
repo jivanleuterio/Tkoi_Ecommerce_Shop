@@ -22,10 +22,7 @@ class PhoneVerificationScreen extends StatefulWidget {
 
 class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   final _phone = TextEditingController();
-  final _code = TextEditingController();
   late Future<AppProfile> _profile;
-  AppProfile? _loadedProfile;
-  bool _codeSent = false;
   bool _loading = false;
 
   @override
@@ -36,7 +33,6 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
 
   Future<AppProfile> _loadProfile() async {
     final profile = await ProfileService().getMyProfile();
-    _loadedProfile = profile;
     _phone.text = _toPhilippineE164(profile.mobileNumber);
     return profile;
   }
@@ -44,7 +40,6 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   @override
   void dispose() {
     _phone.dispose();
-    _code.dispose();
     super.dispose();
   }
 
@@ -63,7 +58,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   bool _validPhone(String phone) =>
       RegExp(r'^\+[1-9]\d{9,14}$').hasMatch(phone);
 
-  Future<void> _sendCode() async {
+  Future<void> _verifyForDemo() async {
     final phone = _toPhilippineE164(_phone.text);
     if (!_validPhone(phone)) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -75,48 +70,13 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
     }
     setState(() => _loading = true);
     try {
-      await AuthService().requestPhoneVerification(phone);
-      if (!mounted) return;
-      setState(() {
-        _phone.text = phone;
-        _codeSent = true;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verification code requested.')),
-      );
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(friendlyError(error))));
-      }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
-  }
-
-  Future<void> _verify() async {
-    if (_code.text.trim().length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter the six-digit phone code.')),
-      );
-      return;
-    }
-    setState(() => _loading = true);
-    try {
-      await AuthService().verifyPhoneCode(phone: _phone.text, code: _code.text);
-      final profile = _loadedProfile;
-      if (profile != null) {
-        await ProfileService().updateProfile(
-          fullName: profile.fullName,
-          username: profile.username,
-          mobileNumber: _phone.text,
-          address: profile.address,
-        );
-      }
+      await AuthService().verifyPhoneForDemo(phone);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Phone number verified. You can now sell fish.'),
+          content: Text(
+            'Demo phone verification complete. You can now sell fish.',
+          ),
         ),
       );
       widget.onVerified?.call();
@@ -171,13 +131,32 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                         ),
                         const SizedBox(height: 8),
                         const Text(
-                          'A verified contact number is required before creating or managing a fish shop.',
+                          'A contact number is required before creating or managing a fish shop.',
                           textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 14),
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.gold.withValues(alpha: .12),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(Icons.science_outlined),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Demo mode: this number is verified instantly for testing. No SMS is sent.',
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                         const SizedBox(height: 24),
                         TextField(
                           controller: _phone,
-                          enabled: !_codeSent,
                           keyboardType: TextInputType.phone,
                           decoration: const InputDecoration(
                             labelText: 'Mobile number',
@@ -185,52 +164,18 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                             prefixIcon: Icon(Icons.phone_outlined),
                           ),
                         ),
-                        if (_codeSent) ...[
-                          const SizedBox(height: 14),
-                          TextField(
-                            controller: _code,
-                            keyboardType: TextInputType.number,
-                            maxLength: 6,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              fontSize: 26,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 7,
-                            ),
-                            decoration: const InputDecoration(
-                              labelText: 'SMS verification code',
-                              counterText: '',
-                            ),
-                          ),
-                        ],
                         const SizedBox(height: 18),
                         FilledButton(
-                          onPressed: _loading
-                              ? null
-                              : _codeSent
-                              ? _verify
-                              : _sendCode,
+                          onPressed: _loading ? null : _verifyForDemo,
                           child: Text(
                             _loading
                                 ? 'Please wait...'
-                                : _codeSent
-                                ? 'Verify phone number'
-                                : 'Send verification code',
+                                : 'Verify number for demo',
                           ),
                         ),
-                        if (_codeSent)
-                          TextButton(
-                            onPressed: _loading
-                                ? null
-                                : () => setState(() {
-                                    _codeSent = false;
-                                    _code.clear();
-                                  }),
-                            child: const Text('Use a different number'),
-                          ),
                         const SizedBox(height: 10),
                         const Text(
-                          'Real SMS delivery requires a configured Supabase SMS provider. For classroom testing, use a configured test number and test OTP.',
+                          'Before publishing a production app, disable demo verification and configure a real SMS provider in Supabase Auth.',
                           textAlign: TextAlign.center,
                           style: TextStyle(fontSize: 12, color: Colors.black54),
                         ),

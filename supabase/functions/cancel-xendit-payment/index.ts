@@ -26,6 +26,11 @@ Deno.serve(async (request) => {
     const userClient = createClient(supabaseUrl, anonKey, {
       global: {headers: {Authorization: authorization}},
     });
+    const {error: accessError} = await userClient.rpc(
+      'assert_account_allowed',
+      {p_action_category: 'existing_order_completion'},
+    );
+    if (accessError) return jsonResponse({error: accessError.message}, 403);
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
     const {data: transaction, error} = await userClient
       .from('payment_transactions')

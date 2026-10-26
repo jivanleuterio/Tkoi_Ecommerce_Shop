@@ -8,6 +8,7 @@ import '../../theme/app_colors.dart';
 import '../../utils/formatters.dart';
 import '../../widgets/error_view.dart';
 import '../../widgets/safe_network_image.dart';
+import '../../widgets/report_button.dart';
 
 class ChatScreen extends StatefulWidget {
   final String conversationId;
@@ -347,6 +348,12 @@ class _MessageBubble extends StatelessWidget {
                   : AppColors.softGray,
             ),
           ),
+          if (!isMine)
+            ReportButton(
+              targetType: 'message',
+              targetId: message.id,
+              compact: true,
+            ),
         ],
       ),
     ),

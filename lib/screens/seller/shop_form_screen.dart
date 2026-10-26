@@ -10,6 +10,7 @@ import '../../utils/validators.dart';
 import '../../widgets/safe_network_image.dart';
 import '../../widgets/koi_backdrop.dart';
 import '../../widgets/cart_action.dart';
+import '../../widgets/current_location_button.dart';
 import '../../widgets/tkoi_button.dart';
 
 class ShopFormScreen extends StatefulWidget {
@@ -109,6 +110,9 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
     int? maxLength,
     TextInputType? keyboardType,
     String? Function(String?)? validator,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+    String? helperText,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -118,7 +122,12 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
         maxLength: maxLength,
         keyboardType: keyboardType,
         validator: validator ?? (value) => Validators.text(value, label),
-        decoration: InputDecoration(labelText: label),
+        decoration: InputDecoration(
+          labelText: label,
+          prefixIcon: prefixIcon,
+          suffixIcon: suffixIcon,
+          helperText: helperText,
+        ),
       ),
     );
   }
@@ -245,6 +254,12 @@ class _ShopFormScreenState extends State<ShopFormScreen> {
                           min: 5,
                           max: 200,
                         ),
+                        prefixIcon: const Icon(Icons.location_on_outlined),
+                        suffixIcon: CurrentLocationButton(
+                          controller: _location,
+                          maxLength: 200,
+                        ),
+                        helperText: 'Use GPS or enter the shop address.',
                       ),
                       const SizedBox(height: 8),
                       TkoiButton(

@@ -13,6 +13,7 @@ import '../../utils/formatters.dart';
 import '../../widgets/error_view.dart';
 import '../../widgets/loading_skeleton.dart';
 import '../../widgets/product_reviews_section.dart';
+import '../../widgets/report_button.dart';
 import '../../widgets/safe_network_image.dart';
 import '../../widgets/tkoi_button.dart';
 import 'checkout_screen.dart';
@@ -161,6 +162,11 @@ class _ProductDetailsScreenState extends State<ProductDetailsScreen> {
       appBar: AppBar(
         title: const Text('Fish details'),
         actions: [
+          ReportButton(
+            targetType: 'product',
+            targetId: widget.productId,
+            compact: true,
+          ),
           FutureBuilder<Product>(
             future: _future,
             builder: (context, snapshot) {

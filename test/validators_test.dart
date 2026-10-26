@@ -82,6 +82,24 @@ void main() {
     expect(message, isNot(contains('PostgrestException')));
   });
 
+  test('missing demo phone verification points to migration 18', () {
+    final message = friendlyError(
+      'PostgrestException(message: Could not find the function '
+      'public.verify_demo_phone(p_phone), code: PGRST202)',
+    );
+    expect(message, contains('18_demo_phone_verification.sql'));
+    expect(message, isNot(contains('PostgrestException')));
+  });
+
+  test('missing SMS provider has a useful explanation', () {
+    final message = friendlyError(
+      'AuthRetryableFetchException(message: Unable to get SMS provider, '
+      'statusCode: 500)',
+    );
+    expect(message, contains('Real SMS is not configured'));
+    expect(message, isNot(contains('AuthRetryableFetchException')));
+  });
+
   test('missing demo payout RPC points to migration 08', () {
     final message = friendlyError(
       'PostgrestException(message: Could not find the function '

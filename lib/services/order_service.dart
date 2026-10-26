@@ -1,6 +1,7 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/market_order.dart';
+import 'cart_service.dart';
 
 class OrderService {
   static const String orderSelect =
@@ -118,6 +119,7 @@ class OrderService {
       'place_order',
       params: {'p_delivery_address': deliveryAddress.trim()},
     );
+    CartService.notifyChanged();
   }
 
   Future<void> buyNow({

@@ -18,6 +18,12 @@ String friendlyError(Object error) {
   ).firstMatch(rawText)?.group(1);
   final text = postgrestMessage?.trim() ?? rawText;
   final lower = rawText.toLowerCase();
+  if (lower.contains('account is suspended')) {
+    return 'Your account is suspended. You can only finish eligible existing orders and use Help & Support.';
+  }
+  if (lower.contains('account is banned')) {
+    return 'Your account is banned. You can only submit an appeal.';
+  }
   if (lower.contains('invalid_credentials') ||
       lower.contains('invalid login credentials')) {
     return 'Incorrect email or password. Check your details or create a new account.';
@@ -89,6 +95,22 @@ String friendlyError(Object error) {
       (lower.contains('42883') || lower.contains('does not exist'))) {
     return 'Phone verification support is not installed in Supabase yet. '
         'Rerun the updated migration 06, then try again.';
+  }
+  if (lower.contains('verify_demo_phone') &&
+      (lower.contains('pgrst202') || lower.contains('does not exist'))) {
+    return 'Demo phone verification is not installed in Supabase yet. '
+        'Run migration 18_demo_phone_verification.sql, then try again.';
+  }
+  if (lower.contains('unable to get sms provider')) {
+    return 'Real SMS is not configured for this Supabase project. '
+        'Use Tkoi demo phone verification or configure an SMS provider.';
+  }
+  if ((lower.contains('pgrst202') || lower.contains('pgrst205')) &&
+      (lower.contains('support_ticket') ||
+          lower.contains('create_report') ||
+          lower.contains('admin_list_tickets'))) {
+    return 'Help & Support is not installed in Supabase yet. '
+        'Run migration 13_support_and_reports.sql, then try again.';
   }
   if (lower.contains('socket') || lower.contains('network')) {
     return 'No internet connection. Please try again.';

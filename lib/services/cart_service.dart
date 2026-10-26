@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/cart_item.dart';
@@ -5,7 +6,13 @@ import '../models/product.dart';
 import 'product_service.dart';
 
 class CartService {
+  static final ValueNotifier<int> revision = ValueNotifier<int>(0);
+
   final SupabaseClient _client = Supabase.instance.client;
+
+  static void notifyChanged() {
+    revision.value++;
+  }
 
   String get _userId {
     final id = _client.auth.currentUser?.id;
@@ -34,6 +41,7 @@ class CartService {
       'add_to_cart',
       params: {'p_product_id': product.id, 'p_quantity': quantity},
     );
+    notifyChanged();
   }
 
   Future<void> updateQuantity(String id, int quantity) async {
@@ -42,9 +50,11 @@ class CartService {
         .from('cart_items')
         .update({'quantity': quantity})
         .eq('id', id);
+    notifyChanged();
   }
 
   Future<void> remove(String id) async {
     await _client.from('cart_items').delete().eq('id', id);
+    notifyChanged();
   }
 }

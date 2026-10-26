@@ -8,6 +8,8 @@ class Shop {
   final String email;
   final String location;
   final String? logoUrl;
+  final String moderationStatus;
+  final String moderationReason;
 
   const Shop({
     required this.id,
@@ -19,6 +21,8 @@ class Shop {
     required this.email,
     required this.location,
     this.logoUrl,
+    this.moderationStatus = 'clear',
+    this.moderationReason = '',
   });
 
   factory Shop.fromMap(Map<String, dynamic> map) => Shop(
@@ -31,5 +35,7 @@ class Shop {
     email: map['email'] as String? ?? '',
     location: map['location'] as String? ?? '',
     logoUrl: map['logo_url'] as String?,
+    moderationStatus: map['moderation_status'] as String? ?? 'clear',
+    moderationReason: map['moderation_reason'] as String? ?? '',
   );
 }

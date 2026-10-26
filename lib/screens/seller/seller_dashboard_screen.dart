@@ -22,6 +22,7 @@ import '../../widgets/seller_sales_chart.dart';
 import '../buyer/shop_details_screen.dart';
 import '../buyer/chat_inbox_screen.dart';
 import '../buyer/product_details_screen.dart';
+import '../buyer/help_support_screen.dart';
 import 'product_form_screen.dart';
 import 'earnings_screen.dart';
 import 'seller_orders_screen.dart';
@@ -51,6 +52,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   late Future<SellerDashboardStats?> _statsFuture;
   int _salesDays = 7;
   bool _showLowStockOnly = false;
+  bool _showModeratedOnly = false;
 
   @override
   void initState() {
@@ -89,7 +91,22 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
   }
 
   void _openLowStockListings() {
-    setState(() => _showLowStockOnly = true);
+    setState(() {
+      _showLowStockOnly = true;
+      _showModeratedOnly = false;
+    });
+    _scrollToListings();
+  }
+
+  void _openModeratedListings() {
+    setState(() {
+      _showModeratedOnly = true;
+      _showLowStockOnly = false;
+    });
+    _scrollToListings();
+  }
+
+  void _scrollToListings() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final listingsContext = _listingsKey.currentContext;
       if (listingsContext != null) {
@@ -453,6 +470,7 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                   ),
                                   onOpenChats: _openChats,
                                   onOpenLowStock: _openLowStockListings,
+                                  onOpenModerated: _openModeratedListings,
                                 ),
                           );
                         },
@@ -468,16 +486,20 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                   children: [
                     Expanded(
                       child: Text(
-                        _showLowStockOnly
+                        _showModeratedOnly
+                            ? 'Listings needing review'
+                            : _showLowStockOnly
                             ? 'Low-stock listings'
                             : 'Your fish listings',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ),
-                    if (_showLowStockOnly)
+                    if (_showLowStockOnly || _showModeratedOnly)
                       TextButton.icon(
-                        onPressed: () =>
-                            setState(() => _showLowStockOnly = false),
+                        onPressed: () => setState(() {
+                          _showLowStockOnly = false;
+                          _showModeratedOnly = false;
+                        }),
                         icon: const Icon(Icons.close_rounded, size: 18),
                         label: const Text('Show all'),
                       ),
@@ -506,7 +528,11 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                       message: 'Use “Add fish” to publish your first listing.',
                     );
                   }
-                  final products = _showLowStockOnly
+                  final products = _showModeratedOnly
+                      ? allProducts
+                            .where((product) => product.isModerated)
+                            .toList()
+                      : _showLowStockOnly
                       ? allProducts
                             .where(
                               (product) =>
@@ -516,10 +542,14 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                             .toList()
                       : allProducts;
                   if (products.isEmpty) {
-                    return const EmptyState(
+                    return EmptyState(
                       icon: Icons.inventory_2_outlined,
-                      title: 'No low-stock listings',
-                      message: 'All visible fish listings have enough stock.',
+                      title: _showModeratedOnly
+                          ? 'No moderated listings'
+                          : 'No low-stock listings',
+                      message: _showModeratedOnly
+                          ? 'Your listings have no moderation restrictions.'
+                          : 'All visible fish listings have enough stock.',
                     );
                   }
                   return Column(
@@ -556,6 +586,70 @@ class _SellerDashboardScreenState extends State<SellerDashboardScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
+                                        if (product.isModerated) ...[
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(8),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.vermilion
+                                                  .withValues(alpha: .08),
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  product.moderationStatus
+                                                      .replaceAll('_', ' '),
+                                                  style: const TextStyle(
+                                                    color: AppColors.vermilion,
+                                                    fontWeight: FontWeight.w800,
+                                                  ),
+                                                ),
+                                                if (product
+                                                    .moderationReason
+                                                    .isNotEmpty)
+                                                  Text(
+                                                    product.moderationReason,
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                TextButton.icon(
+                                                  onPressed: () => Navigator.push<void>(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          CreateSupportTicketScreen(
+                                                            initialCategory:
+                                                                'appeal',
+                                                            initialSubject:
+                                                                'Appeal listing moderation: ${product.name}',
+                                                            productId:
+                                                                product.id,
+                                                            shopId:
+                                                                product.shopId,
+                                                            categoryLocked:
+                                                                true,
+                                                          ),
+                                                    ),
+                                                  ),
+                                                  icon: const Icon(
+                                                    Icons.support_agent,
+                                                    size: 17,
+                                                  ),
+                                                  label: const Text('Appeal'),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                        ],
                                         Text(
                                           product.name,
                                           style: const TextStyle(
@@ -803,6 +897,7 @@ class _DashboardInsights extends StatelessWidget {
   final VoidCallback onOpenOrders;
   final VoidCallback onOpenChats;
   final VoidCallback onOpenLowStock;
+  final VoidCallback onOpenModerated;
 
   const _DashboardInsights({
     required this.products,
@@ -814,6 +909,7 @@ class _DashboardInsights extends StatelessWidget {
     required this.onOpenOrders,
     required this.onOpenChats,
     required this.onOpenLowStock,
+    required this.onOpenModerated,
   });
 
   List<SellerSalesPoint> get _localPoints {
@@ -862,6 +958,7 @@ class _DashboardInsights extends StatelessWidget {
     final localLowStock = products
         .where((product) => product.quantity <= 3 && product.status != 'hidden')
         .length;
+    final moderated = products.where((product) => product.isModerated).length;
     final reviewedProducts = products
         .where((product) => product.totalReviews > 0)
         .toList();
@@ -941,6 +1038,12 @@ class _DashboardInsights extends StatelessWidget {
                   label: 'Low-stock listings',
                   count: lowStock,
                   onTap: onOpenLowStock,
+                ),
+                _ActionRow(
+                  icon: Icons.policy_outlined,
+                  label: 'Moderated listings',
+                  count: moderated,
+                  onTap: onOpenModerated,
                 ),
               ],
             ),

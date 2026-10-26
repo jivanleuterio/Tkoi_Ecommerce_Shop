@@ -18,6 +18,7 @@ class _CartActionState extends State<CartAction> {
   void initState() {
     super.initState();
     _count = _loadCount();
+    CartService.revision.addListener(_handleCartChanged);
   }
 
   Future<int> _loadCount() => CartService()
@@ -27,6 +28,17 @@ class _CartActionState extends State<CartAction> {
 
   void _refreshCount() {
     _count = _loadCount();
+  }
+
+  void _handleCartChanged() {
+    if (!mounted) return;
+    setState(_refreshCount);
+  }
+
+  @override
+  void dispose() {
+    CartService.revision.removeListener(_handleCartChanged);
+    super.dispose();
   }
 
   Future<void> _openCart() async {

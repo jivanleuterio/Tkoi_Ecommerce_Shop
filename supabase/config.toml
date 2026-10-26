@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.xendit-payment-return]
 verify_jwt = false
+
+[functions.admin-set-auth-ban]
+verify_jwt = true

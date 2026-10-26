@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../models/admin_access.dart';
 import '../../models/shop.dart';
 import '../../services/auth_service.dart';
 import '../../services/shop_service.dart';
@@ -14,7 +15,9 @@ import 'profile_screen.dart';
 import 'search_screen.dart';
 
 class MainShell extends StatefulWidget {
-  const MainShell({super.key});
+  final AdminAccessContext? access;
+
+  const MainShell({super.key, this.access});
 
   @override
   State<MainShell> createState() => _MainShellState();
@@ -36,7 +39,22 @@ class _MainShellState extends State<MainShell> {
     ];
 
     return Scaffold(
-      body: IndexedStack(index: _index, children: pages),
+      body: Column(
+        children: [
+          if (widget.access?.isSuspended == true)
+            MaterialBanner(
+              content: Text(
+                widget.access?.reasonPublic?.trim().isNotEmpty == true
+                    ? 'Account suspended: ${widget.access!.reasonPublic}'
+                    : 'Your account is suspended. You can finish eligible existing orders and use Help & Support.',
+              ),
+              actions: const [SizedBox.shrink()],
+            ),
+          Expanded(
+            child: IndexedStack(index: _index, children: pages),
+          ),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (value) {

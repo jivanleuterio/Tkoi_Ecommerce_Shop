@@ -5,8 +5,13 @@ import '../theme/app_colors.dart';
 
 class CurrentLocationButton extends StatefulWidget {
   final TextEditingController controller;
+  final int maxLength;
 
-  const CurrentLocationButton({super.key, required this.controller});
+  const CurrentLocationButton({
+    super.key,
+    required this.controller,
+    this.maxLength = 300,
+  });
 
   @override
   State<CurrentLocationButton> createState() => _CurrentLocationButtonState();
@@ -20,8 +25,12 @@ class _CurrentLocationButtonState extends State<CurrentLocationButton> {
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() => _locating = true);
     try {
-      final address = await CurrentLocationService().getCurrentAddress();
+      final detectedAddress = await CurrentLocationService()
+          .getCurrentAddress();
       if (!mounted) return;
+      final address = detectedAddress.length <= widget.maxLength
+          ? detectedAddress
+          : detectedAddress.substring(0, widget.maxLength).trimRight();
       widget.controller.value = TextEditingValue(
         text: address,
         selection: TextSelection.collapsed(offset: address.length),

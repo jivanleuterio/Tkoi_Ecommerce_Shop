@@ -14,6 +14,8 @@ class Product {
   final String healthCondition;
   final String sellerLocation;
   final String status;
+  final String moderationStatus;
+  final String moderationReason;
   final DateTime createdAt;
   final List<String> imageUrls;
   final String shopName;
@@ -40,6 +42,8 @@ class Product {
     required this.healthCondition,
     required this.sellerLocation,
     required this.status,
+    this.moderationStatus = 'clear',
+    this.moderationReason = '',
     required this.createdAt,
     required this.imageUrls,
     required this.shopName,
@@ -51,7 +55,9 @@ class Product {
     this.ratingCounts = const {},
   });
 
-  bool get isAvailable => status == 'available' && quantity > 0;
+  bool get isAvailable =>
+      status == 'available' && quantity > 0 && moderationStatus == 'clear';
+  bool get isModerated => moderationStatus != 'clear';
   String? get primaryImage => imageUrls.isEmpty ? null : imageUrls.first;
 
   Product copyWith({
@@ -77,6 +83,8 @@ class Product {
     healthCondition: healthCondition,
     sellerLocation: sellerLocation,
     status: status,
+    moderationStatus: moderationStatus,
+    moderationReason: moderationReason,
     createdAt: createdAt,
     imageUrls: imageUrls,
     shopName: shopName,
@@ -115,6 +123,8 @@ class Product {
       healthCondition: map['health_condition'] as String? ?? '',
       sellerLocation: map['seller_location'] as String? ?? '',
       status: map['status'] as String? ?? 'hidden',
+      moderationStatus: map['moderation_status'] as String? ?? 'clear',
+      moderationReason: map['moderation_reason'] as String? ?? '',
       createdAt:
           DateTime.tryParse(map['created_at'] as String? ?? '') ??
           DateTime.now(),

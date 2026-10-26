@@ -4,6 +4,7 @@ import '../../models/app_profile.dart';
 import '../../services/auth_service.dart';
 import '../../services/profile_service.dart';
 import '../../theme/app_colors.dart';
+import '../../utils/formatters.dart';
 import '../../widgets/error_view.dart';
 import '../../widgets/cart_action.dart';
 import '../../widgets/loading_skeleton.dart';
@@ -12,6 +13,7 @@ import '../auth/phone_verification_screen.dart';
 import 'edit_profile_screen.dart';
 import 'favorites_screen.dart';
 import 'chat_inbox_screen.dart';
+import 'help_support_screen.dart';
 import 'orders_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -23,6 +25,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   late Future<AppProfile> _future;
+  bool _signingOut = false;
 
   @override
   void initState() {
@@ -38,6 +41,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _load();
     });
+  }
+
+  Future<void> _signOut() async {
+    if (_signingOut) return;
+    setState(() => _signingOut = true);
+    var completed = false;
+    try {
+      await AuthService().signOut();
+      completed = true;
+      if (!mounted) return;
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).popUntil((route) => route.isFirst);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(friendlyError(error))));
+      }
+    } finally {
+      if (mounted && !completed) setState(() => _signingOut = false);
+    }
   }
 
   @override
@@ -220,6 +246,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : 'Email verified • Phone verification available',
                       ),
                     ),
+                    const Divider(indent: 72),
+                    ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: AppColors.cream,
+                        child: Icon(
+                          Icons.support_agent,
+                          color: AppColors.koiOrange,
+                        ),
+                      ),
+                      title: const Text('Help & Support'),
+                      subtitle: const Text(
+                        'Tickets, appeals, and account help',
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HelpSupportScreen(),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -255,9 +302,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
               const SizedBox(height: 10),
               OutlinedButton.icon(
-                onPressed: () => AuthService().signOut(),
+                onPressed: _signingOut ? null : _signOut,
                 icon: const Icon(Icons.logout),
-                label: const Text('Sign out'),
+                label: Text(_signingOut ? 'Signing out...' : 'Sign out'),
               ),
               const SizedBox(height: 18),
               const Text(

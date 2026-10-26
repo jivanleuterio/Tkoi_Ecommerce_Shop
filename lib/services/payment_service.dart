@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/online_payment.dart';
+import 'cart_service.dart';
 
 class PaymentService {
   final SupabaseClient _client = Supabase.instance.client;
@@ -28,9 +29,11 @@ class PaymentService {
         'create-xendit-payment',
         body: body,
       );
-      return OnlinePayment.fromMap(
+      final payment = OnlinePayment.fromMap(
         Map<String, dynamic>.from(response.data as Map),
       );
+      if (buyNowProductId == null) CartService.notifyChanged();
+      return payment;
     } on FunctionsHttpException catch (error) {
       if (error.status == 404) {
         throw Exception(

@@ -73,6 +73,11 @@ class AuthService {
     await _client.auth.refreshSession();
   }
 
+  Future<void> verifyPhoneForDemo(String phone) async {
+    await _client.rpc('verify_demo_phone', params: {'p_phone': phone.trim()});
+    await _client.auth.refreshSession();
+  }
+
   Future<void> sendPasswordReset(String email) =>
       _client.auth.resetPasswordForEmail(
         email.trim(),

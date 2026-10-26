@@ -6,6 +6,7 @@ import '../services/review_service.dart';
 import '../theme/app_colors.dart';
 import '../utils/formatters.dart';
 import 'safe_network_image.dart';
+import 'report_button.dart';
 
 class ProductReviewsSection extends StatefulWidget {
   final Product product;
@@ -274,6 +275,11 @@ class _ReviewCard extends StatelessWidget {
                 size: 17,
                 color: AppColors.gold,
               ),
+            ),
+            ReportButton(
+              targetType: 'review',
+              targetId: review.id,
+              compact: true,
             ),
           ],
         ),

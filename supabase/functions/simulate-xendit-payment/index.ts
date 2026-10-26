@@ -46,6 +46,11 @@ Deno.serve(async (request) => {
     if (authError || !authData.user) {
       return jsonResponse({error: 'Please sign in again.'}, 401);
     }
+    const {error: accessError} = await userClient.rpc(
+      'assert_account_allowed',
+      {p_action_category: 'commerce'},
+    );
+    if (accessError) return jsonResponse({error: accessError.message}, 403);
 
     const {data: transaction, error: transactionError} = await userClient
       .from('payment_transactions')

@@ -1,180 +1,342 @@
-# Tkoi
+# Tkoi Fish Marketplace
 
-Tkoi is a beginner-friendly Flutter and Supabase marketplace where every user
-can buy fish and create one shop to sell fish.
+Tkoi is an Android marketplace application for discovering, buying, and selling
+fish. A single account can browse products as a buyer and create one shop to
+become a seller.
 
-## Supabase setup (required once)
+## Download the app
 
-The original project used a small Xendit demo table. The new schema uses UUIDs
-and different fields, so `supabase/schema.sql` resets the marketplace
-tables. Back up any old product or order rows you want to keep.
+Download the latest Tkoi APK from Google Drive:
 
-1. Open your Supabase project at https://supabase.com/dashboard.
-2. Select **SQL Editor** and click **New query**.
-3. Open `supabase/schema.sql` from this project and copy all of it.
-4. Paste it into the SQL Editor and click **Run**.
-5. Open `supabase/security_hardening.sql`, copy it into a new SQL query, and
-   click **Run**. This enforces validation and verified-phone seller policies in
-   the database, including projects that already ran the original schema.
-6. Open **Authentication → Providers → Email** and make sure Email is enabled.
-7. Keep **Confirm email** enabled. Set **Email OTP length** to `6`, set
-   **Email OTP expiration** to `3600` seconds, and save the provider settings.
-8. Open **Authentication → Emails → Templates →
-   Confirm signup**. Replace the message with the OTP template shown below.
-9. Open **Authentication → URL Configuration**. Under **Redirect URLs**, add
-   `io.supabase.tkoi://reset-callback` so APK password-reset links return to Tkoi.
-10. Open **Storage**. Confirm these public buckets now exist:
-   `profile-pictures`, `shop-logos`, and `product-images`.
+[Download the Tkoi APK](https://drive.google.com/file/d/1GP1-MZ_sKnUI-fedGmMF-iSx7jyhsETU/view?usp=sharing)
 
-Use this **Confirm signup** email template so registration sends a code instead
-of a confirmation button:
+1. Open the download link on your Android phone.
+2. Select **Download**.
+3. If Google Drive says that it cannot scan the APK, select **Download anyway**.
+4. Wait for the download to finish.
 
-```html
-<h2>Verify your Tkoi account</h2>
-<p>Enter this six-digit code in the Tkoi app:</p>
-<h1>{{ .Token }}</h1>
-<p>This code expires shortly. Ignore this email if you did not register.</p>
-```
+Only download the APK from the link supplied with this project.
 
-Use exactly `{{ .Token }}` in the template. Do not display `{{ .TokenHash }}`
-or `{{ .ConfirmationURL }}` as the code. After changing the OTP length, request
-a new code in Tkoi; an older eight-digit email code cannot be shortened or
-reused.
+## Install the APK
 
-The SQL creates tables, indexes, profile triggers, stock-safe ordering functions,
-Row Level Security policies, buckets, and storage policies. Never put a Supabase
-service-role key in this app. The existing publishable key in
-`lib/config/app_config.dart` is the correct client-side key.
+1. Open the **Downloads** folder on your phone.
+2. Tap the downloaded Tkoi APK.
+3. If Android blocks the installation, select **Settings** when prompted.
+4. Enable **Allow from this source** or **Install unknown apps** for the browser
+   or file manager you used.
+5. Return to the APK installer.
+6. Select **Install**.
+7. Wait for the installation to finish.
+8. Select **Open**.
 
-### Existing project: cart and Buy Now update
-
-If you already ran `schema.sql` before the cart fix, do not reset the database.
-Run only this small migration:
-
-1. Open **Supabase → SQL Editor → New query**.
-2. Open `supabase/cart_transactions_fix.sql` in VS Code and copy all its text.
-3. Paste it into Supabase and click **Run**.
-4. Fully stop and rerun the Flutter app.
-
-This preserves accounts, shops, fish, carts, and orders. It removes a circular
-Row Level Security check and installs atomic **Add to cart** and **Buy now**
-database functions.
+The setting names may be slightly different depending on the phone brand and
+Android version.
 
 ## Run the app
 
-```powershell
-flutter pub get
-flutter run
-```
+1. Connect the phone to the internet.
+2. Find **Tkoi** in the phone's application list.
+3. Tap the Tkoi icon.
+4. Wait for the startup screen to finish.
+5. The sign-in page will appear.
 
-For a clean rerun:
+The application is already connected to its online services. People who install
+the APK do not need to configure a database or development environment.
 
-```powershell
-flutter clean
-flutter pub get
-flutter run
-```
+## Create an account
 
-## Phone verification for sellers
+1. Open Tkoi.
+2. Select **Create an account**.
+3. Enter your full name.
+4. Create a username.
+5. Enter a valid email address.
+6. Enter your mobile number and delivery address.
+7. Create and confirm your password.
+8. Submit the registration form.
+9. Check your email for the six-digit verification code.
+10. Enter the code in Tkoi.
+11. After verification, sign in using your email and password.
 
-Tkoi signs users in by email, but blocks the Sell area until their phone number
-has been verified with a six-digit Supabase `phone_change` OTP. Real SMS delivery
-requires enabling Phone under **Authentication → Sign In / Providers** and
-configuring a supported SMS provider. Supabase does not deliver real SMS by
-itself. For classroom development without SMS costs, use a Supabase test phone
-number/test OTP if that option is available in your project, or use the already
-verified Fisherman demo account below.
+Check the spam or junk folder if the verification email does not appear in the
+inbox.
 
-## Ordering behavior
+## Sign in
 
-Checkout supports Cash on Delivery and Xendit hosted online payment. A cart
-containing fish from multiple shops is split into one order per shop. The
-database locks and rechecks stock, rejects purchases of the buyer's own listing,
-prevents negative stock, and reduces stock in the same transaction.
+1. Open Tkoi.
+2. Enter your registered email address.
+3. Enter your password.
+4. Select **Sign in**.
 
-Buyers first choose a visible method: GCash, Maya, credit/debit card, BPI, BDO,
-UnionBank, or QRPh. While `useXenditTestSimulator` is enabled, every online
-choice creates a QRPh Payment Request in Xendit Test Mode and completes it
-through Xendit's official simulation API after the buyer taps **Proceed to
-Xendit**. The selected method is still saved on the order, but no real card,
-bank, or mobile details are requested. The server automatically rejects the
-simulator if a live Xendit key is used.
+Demo user and administrator credentials are provided separately with the
+project submission. They are not published in this README.
 
-## Enable Xendit online payments
+If you forget your password, select **Forgot password?**, enter your registered
+email, and follow the reset instructions sent to that email address.
 
-Start with **Xendit Test Mode**. Never paste a Xendit secret key into Flutter,
-`app_config.dart`, source control, or a screenshot.
+## Navigate the app
 
-### 1. Update the database
+The navigation bar at the bottom of the application contains five main areas.
 
-1. Open **Supabase → SQL Editor → New query**.
-2. Copy all of `supabase/online_payments.sql` into the editor. It is safe to run
-   this file again when updating an existing Tkoi database.
-3. Click **Run**. This migration preserves existing accounts and orders.
+### Home
 
-### 2. Create the Xendit test credentials
+The Home page displays featured fish, categories, the search shortcut, and the
+shopping cart.
 
-1. In Xendit Test Mode, open **Settings → Developers → API Keys**.
-2. Create a secret API key with only the required money-in/write permission.
-3. Open **Settings → Webhooks** and copy the webhook verification token.
+- Tap a category to browse a specific type of fish.
+- Tap a fish card to open its complete listing.
+- Tap the heart icon to save a listing as a favorite.
+- Tap the bag icon to open the shopping cart.
 
-Test Mode normally exposes its test channels. Before Live Mode, activate every
-channel you want to show under **Xendit → Payment Channels**. If a selected
-channel is not activated, Xendit will reject that checkout instead of silently
-switching to another method.
+### Search
 
-### 3. Store secrets in Supabase
+Use Search to find a listing by fish name, species, or variety. Category filters
+can narrow the results.
 
-1. Open **Supabase → Edge Functions → Secrets**.
-2. Add `XENDIT_SECRET_KEY` with the Xendit test secret key.
-3. Add `XENDIT_WEBHOOK_TOKEN` with the Xendit webhook token.
-4. Save. Supabase already provides its URL and server-side service key to Edge
-   Functions; do not create or expose a service-role key in Flutter.
+### Orders
 
-### 4. Deploy the Edge Functions
+The Orders page displays purchases according to their current stage, including:
 
-From the project folder in the VS Code terminal, run:
+- To pay
+- To ship
+- To receive
+- To review
+- Completed
+- Cancelled
+- Return requests
 
-```powershell
-npx supabase login
-npx supabase link --project-ref kofbuodhxfjhvzbdorve
-npx supabase functions deploy create-xendit-payment --use-api
-npx supabase functions deploy cancel-xendit-payment --use-api
-npx supabase functions deploy xendit-webhook --no-verify-jwt --use-api
-npx supabase functions deploy xendit-payment-return --no-verify-jwt --use-api
-```
+Tap an order to view its items, seller, payment information, delivery address,
+status, and available actions.
 
-`supabase/config.toml` also records which public functions do not require a
-user JWT.
+### Sell
 
-### 5. Configure the Xendit webhooks
+The Sell area allows a verified user to create and manage a fish shop. See
+[Become a seller](#become-a-seller) for the complete steps.
 
-In **Xendit → Settings → Webhooks**, use this URL for both **Payment Session –
-Completed** and **Payment Session – Expired**:
+### Profile
 
-```text
-https://kofbuodhxfjhvzbdorve.supabase.co/functions/v1/xendit-webhook
-```
+The Profile page provides access to:
 
-Click **Test & Save** for each webhook. A payment is marked paid only after this
-verified webhook arrives. The seller cannot process an unpaid Xendit order.
+- Account information
+- My orders
+- Messages
+- Favorites
+- Account security
+- Help and support
+- Edit profile
+- Sign out
 
-If Tkoi says that online payment setup is incomplete, rerun
-`supabase/online_payments.sql`, redeploy `create-xendit-payment`, and confirm
-that both Supabase secrets exist. Restarting Flutter alone cannot install the
-server-side payment service.
+## View a fish listing
 
-### Online payment lifecycle
+Tap a fish card to view:
 
-Tkoi reserves stock and creates pending orders, then opens Xendit's hosted
-checkout. A completed webhook marks every related order paid. A failed,
-cancelled, or expired session cancels those orders and restores stock. Automated
-refunds are not included yet, so sellers cannot cancel a paid Xendit order from
-the app.
+- Fish photos
+- Name, species, and category
+- Price and available quantity
+- Size, age, sex, and health condition
+- Seller information and location
+- Ratings and buyer reviews
 
-## Optional Fisherman sample account
+For another seller's listing, the page also provides options to add the fish to
+the cart, use Buy Now, contact the seller, save the listing, or report a problem.
 
-Create and auto-confirm `fisherman.tkoi.demo@gmail.com` in **Authentication → Users**
-with password `Fisherman123!`. Then run `supabase/seed_fisherman.sql` in the SQL
-Editor. This creates the Fisherman shop, marks its sample number as verified,
-and adds one listing for every fish category.
+## Add fish to the cart
+
+1. Open a fish listing.
+2. Select **Add to cart**.
+3. Open the shopping cart using the bag icon.
+4. Increase or decrease the item quantity if needed.
+5. Remove unwanted items using the remove icon.
+6. Review the total.
+7. Select **Proceed to checkout**.
+
+The application will prevent a seller from purchasing their own listing.
+
+## Place an order
+
+1. Add a product to the cart or select **Buy Now**.
+2. Confirm the delivery address on the Checkout page.
+3. Review the products, quantities, and total.
+4. Select a payment method.
+5. Confirm the order.
+
+Available payment choices can include Cash on Delivery, GCash, Maya,
+credit/debit card, BPI, BDO, UnionBank, and QRPh.
+
+Online payments in the classroom version use test mode. Do not enter real bank,
+card, or mobile-wallet information while testing the application.
+
+## Track an order
+
+1. Open the **Orders** tab.
+2. Select the appropriate order category.
+3. Tap an order to open its details.
+4. Review the order status and payment status.
+5. Follow the available next action displayed by the application.
+
+After an eligible order is completed, the buyer can submit a star rating,
+comment, and optional photos. Eligible purchases may also display a return
+request option within the allowed return period.
+
+## Favorites
+
+1. Tap the heart icon on a fish listing or product card.
+2. Open **Profile**.
+3. Select **My favorites**.
+4. Tap a saved listing to view it again.
+
+Tap the heart again to remove a listing from favorites.
+
+## Messages
+
+Buyers and sellers can communicate through the in-app messaging feature.
+
+1. Open a product or order with a message option.
+2. Start or open the conversation.
+3. Enter a message.
+4. Tap the send icon.
+5. Return to conversations through **Profile > Messages**.
+
+## Become a seller
+
+A normal Tkoi account can become a seller after its mobile number is verified.
+
+1. Sign in to Tkoi.
+2. Open the **Sell** tab.
+3. If requested, enter your mobile number.
+4. Request the six-digit verification code.
+5. Enter the received code.
+6. After verification, create your shop.
+7. Enter the shop name, owner information, description, contact details, and
+   location.
+8. Add a shop logo if desired.
+9. Save the shop.
+
+If phone verification is unavailable during classroom testing, use the verified
+demo seller account supplied separately with the submission.
+
+## Add a fish listing
+
+1. Open the **Sell** tab.
+2. Select **Add fish**.
+3. Enter the fish name and species.
+4. Choose a category.
+5. Add a description.
+6. Enter the price and quantity.
+7. Add relevant details such as size, age, sex, and health condition.
+8. Confirm the seller location and availability status.
+9. Add at least one clear fish image.
+10. Select **Save listing**.
+
+The listing will appear in the seller inventory and marketplace according to
+its availability status.
+
+## Manage the shop and listings
+
+The Seller Dashboard allows a seller to:
+
+- View or edit the shop
+- Add new fish listings
+- Edit existing listings
+- Update price and quantity
+- Change a listing to Available, Sold out, or Hidden
+- Review listing views, favorites, ratings, and sales
+- Open seller orders
+- View earnings
+
+## Process seller orders
+
+1. Open the **Sell** tab.
+2. Open the seller order list.
+3. Filter orders by status if needed.
+4. Tap an order to view the buyer, products, payment method, and delivery
+   information.
+5. Use the displayed next action to advance the order.
+
+Do not change order statuses unless the required action has actually been
+completed.
+
+## Seller earnings and withdrawals
+
+The Earnings page displays:
+
+- Available balance
+- Pending escrow
+- Total earned
+- Total withdrawn
+- Earnings, fee, and withdrawal transactions
+
+Sellers can add a payout account and submit a withdrawal against the available
+balance. The classroom build uses demo withdrawals and does not transfer real
+money.
+
+## Help and support
+
+1. Open **Profile**.
+2. Select **Help & Support**.
+3. Select **New ticket**.
+4. Choose the appropriate category.
+5. Enter the subject and describe the concern.
+6. Submit the ticket.
+7. Return to the support page to check its status and replies.
+
+## Administrator access
+
+Signing in with an authorized administrator account opens the Tkoi Admin area.
+Available sections depend on the administrator's assigned permissions and may
+include:
+
+- Dashboard
+- User accounts
+- Support tickets
+- Reports
+- Content moderation
+- Orders
+- Finance
+- Audit records
+- Administrator team
+
+The demo administrator credentials are supplied separately in the private
+project submission.
+
+## Troubleshooting
+
+### The app cannot connect
+
+- Confirm that the phone is connected to the internet.
+- Close and reopen Tkoi.
+- Try a different Wi-Fi or mobile-data connection.
+
+### The APK cannot be installed
+
+- Allow installation from the browser or file manager used to download it.
+- Confirm that the phone has enough free storage.
+- Download the APK again in case the previous download was incomplete.
+- Confirm that the device supports Android applications.
+
+### The verification email did not arrive
+
+- Check the spam or junk folder.
+- Confirm that the email address was entered correctly.
+- Request a new verification code.
+- Use the newest code because an older code may have expired.
+
+### The Sell tab requests phone verification
+
+Phone verification is required before creating or managing a shop. Complete the
+verification process or use the verified demo seller account supplied with the
+submission.
+
+### A payment does not complete
+
+- Confirm that the phone has internet access.
+- Remember that the classroom build uses test payments.
+- Return to the order list and check the payment status before trying again.
+
+## Important testing notes
+
+- The APK requires an internet connection.
+- Online payment features use test mode and do not charge real money.
+- Demo withdrawals do not send real money.
+- Do not use real payment information during testing.
+- Use only demonstration credentials supplied with the project submission.
+
